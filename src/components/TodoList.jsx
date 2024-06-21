@@ -6,6 +6,33 @@ import { DeleteOutlined } from "@ant-design/icons";
 import { List } from "antd";
 import { Checkbox } from "antd";
 import { useState } from "react";
+import { useReducer } from "react";
+import tasksReducer from "./tasksReducer";
+
+function SetTask() {
+  const [titleText, setTitleText] = useState("");
+  const [date, setDate] = useState("");
+  const [taskData, dispatch] = useReducer(tasksReducer, []);
+  return (
+    <>
+      <SetBar
+        titleText={titleText}
+        date={date}
+        onTitleChange={setTitleText}
+        onDateChange={setDate}
+      />
+      <SetButton
+        titleText={titleText}
+        date={date}
+        onTitleChange={setTitleText}
+        onDateChange={setDate}
+        taskData={taskData}
+        dispatch={dispatch}
+      />
+      <TaskListTable taskData={taskData} dispatch={dispatch} />
+    </>
+  );
+}
 
 function SetBar({ titleText, date, onTitleChange, onDateChange }) {
   return (
@@ -24,27 +51,19 @@ function SetBar({ titleText, date, onTitleChange, onDateChange }) {
   );
 }
 
-function SetButton({
-  titleText,
-  date,
-  onTitleChange,
-  onDateChange,
-  taskData,
-  onTaskDataChange,
-}) {
+function SetButton({ titleText, date, onTitleChange, onDateChange, dispatch }) {
   function handleSubmit() {
     if (!titleText || !date) {
       message.info("请输入任务名称和截止时间");
       return;
     }
-    let taskDataCopy = taskData.slice();
-    taskDataCopy.push({
+    dispatch({
+      type: "submit",
       title: titleText,
       date: date,
       isFinish: false,
       isInTime: date > new Date(),
     });
-    onTaskDataChange(taskDataCopy);
     onTitleChange("");
     onDateChange("");
   }
@@ -56,21 +75,19 @@ function SetButton({
   );
 }
 
-function TaskListTable({ taskData, onTaskDataChange }) {
+function TaskListTable({ taskData, dispatch }) {
   const handleCheckboxChange = (index) => {
-    const updatedTaskData = taskData.map((task, i) => {
-      if (i === index) {
-        return { ...task, isFinish: !task.isFinish };
-      }
-      return task;
+    dispatch({
+      type: "change",
+      index: index,
     });
-    onTaskDataChange(updatedTaskData);
   };
 
   const onDeleteTask = (index) => {
-    const updatedTaskData = [...taskData];
-    updatedTaskData.splice(index, 1);
-    onTaskDataChange(updatedTaskData);
+    dispatch({
+      type: "delete",
+      index: index,
+    });
   };
 
   return (
@@ -111,33 +128,8 @@ function TaskListTable({ taskData, onTaskDataChange }) {
   );
 }
 
-function SetTask() {
-  const [titleText, setTitleText] = useState("");
-  const [date, setDate] = useState("");
-  const [taskData, setTaskData] = useState([]);
+function TodoList() {
   return (
-    <>
-      <SetBar
-        titleText={titleText}
-        date={date}
-        onTitleChange={setTitleText}
-        onDateChange={setDate}
-      />
-      <SetButton
-        titleText={titleText}
-        date={date}
-        onTitleChange={setTitleText}
-        onDateChange={setDate}
-        taskData={taskData}
-        onTaskDataChange={setTaskData}
-      />
-      <TaskListTable taskData={taskData} onTaskDataChange={setTaskData} />
-    </>
-  );
-}
-
-function TodoList(){
-    return (
     <div
       direction="vertical"
       style={{
